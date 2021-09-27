@@ -55,7 +55,7 @@ export class AppService {
       }
     `;
 
-    return await axios.post('http://localhost:5000/graphql', {
+    await axios.post('http://localhost:5000/graphql', {
       query: query,
       variables: {
         students: {
