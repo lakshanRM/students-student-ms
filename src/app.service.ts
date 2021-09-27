@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateStudentInput } from './entities/create-student';
 import { Student } from './entities/student.entity';
-
+import { request, gql } from 'graphql-request';
+import axios from 'axios';
 @Injectable()
 export class AppService {
   logger = new Logger('Student-MS : Service');
@@ -36,22 +37,32 @@ export class AppService {
     updateStudentInput: CreateStudentInput,
   ): Promise<Student> {
     const student = await this.studentRepo.findOne(id);
-    student.firstName = updateStudentInput.firstName;
-    student.lastName = updateStudentInput.lastName;
+    student.firstname = updateStudentInput.firstname;
+    student.lastname = updateStudentInput.lastname;
     student.dob = updateStudentInput.dob;
     student.age = updateStudentInput.age;
     student.email = updateStudentInput.email;
     return await this.studentRepo.save(student);
   }
 
-  async createBulk(
-    createStudentInputAry: CreateStudentInput[],
-  ): Promise<Student[]> {
-    const studnetsAry: any = [];
-    createStudentInputAry.forEach((student) => {
-      studnetsAry.push(this.studentRepo.create(student));
-    });
+  async createBulk(createStudentInputAry: CreateStudentInput[]) {
+    const query = gql`
+      mutation addStudents($students: AddStudentsInput!) {
+        addStudents(input: $students) {
+          clientMutationId
+          integer
+        }
+      }
+    `;
 
-    return await this.studentRepo.save(studnetsAry);
+    return await axios.post('http://localhost:5000/graphql', {
+      query: query,
+      variables: {
+        students: {
+          students: createStudentInputAry,
+        },
+      },
+    });
+    // return await this.studentRepo.save(studnetsAry);
   }
 }

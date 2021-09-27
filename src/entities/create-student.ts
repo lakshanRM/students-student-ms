@@ -1,6 +1,6 @@
 export class CreateStudentInput {
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   email: string;
   dob: string;
   age: number;
