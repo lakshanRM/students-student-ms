@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateStudentInput } from './entities/create-student';
 import { Student } from './entities/student.entity';
-import { request, gql } from 'graphql-request';
+import { gql } from 'graphql-request';
 import axios from 'axios';
 @Injectable()
 export class AppService {
@@ -49,13 +49,12 @@ export class AppService {
     const query = gql`
       mutation addStudents($students: AddStudentsInput!) {
         addStudents(input: $students) {
-          clientMutationId
           integer
         }
       }
     `;
 
-    await axios.post('http://localhost:5000/graphql', {
+    const status = await axios.post('http://localhost:5000/graphql', {
       query: query,
       variables: {
         students: {
@@ -63,6 +62,11 @@ export class AppService {
         },
       },
     });
+
+    if (status.status == 200) {
+      return { status: 'success' };
+    }
+
     // return await this.studentRepo.save(studnetsAry);
   }
 }
