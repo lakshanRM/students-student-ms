@@ -79,8 +79,10 @@ export class AppService {
       });
       return await this.studentRepo.save(student);
     } catch (err) {
-      this.logger.log('Error while updating student error=>' + err);
-      throw new InternalServerErrorException(`Server error, ${err}`);
+      //   this.logger.log('Error while updating student error=> ' + err);
+      throw new InternalServerErrorException(
+        `Error while updating student error=>, ${err}`,
+      );
     }
   }
 
@@ -96,7 +98,7 @@ export class AppService {
     `;
 
     try {
-      const status = await axios.post('http://localhost:5000/graphql', {
+      const status = await axios.post(process.env.POSTGRAPHILE_URL, {
         query: query,
         variables: {
           students: {
