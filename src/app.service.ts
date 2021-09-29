@@ -1,51 +1,92 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateStudentInput } from './entities/create-student';
 import { Student } from './entities/student.entity';
 import { gql } from 'graphql-request';
 import axios from 'axios';
+
+export interface CreatedStatus {
+  status: string;
+}
 @Injectable()
 export class AppService {
-  logger = new Logger('Student-MS : Service');
+  logger = new Logger(AppService.name);
   constructor(
     @InjectRepository(Student) private studentRepo: Repository<Student>,
   ) {}
 
   async findAll(): Promise<Student[]> {
-    this.logger.log('Reading form Database.');
-    return this.studentRepo.find();
+    try {
+      return await this.studentRepo.find();
+    } catch (err) {
+      this.logger.log('Error while reading data error=>' + err);
+      throw new InternalServerErrorException(`Server error, ${err}`);
+    }
   }
 
   async findOne(id: number): Promise<Student> {
-    return this.studentRepo.findOneOrFail(id);
+    try {
+      const student = await this.studentRepo.findOneOrFail(id);
+      if (!student) {
+        throw new HttpException(
+          'Could not find a studnet with the id=>' + id,
+          400,
+        );
+      }
+      return student;
+    } catch (err) {
+      this.logger.log('Error while reading data error=>' + err);
+      throw new InternalServerErrorException(`Server error, ${err}`);
+    }
   }
 
   async remove(id: number): Promise<Student> {
-    const student = await this.studentRepo.findOne(id);
-    await this.studentRepo.remove(student);
-    return student;
+    try {
+      const student = await this.findOne(id);
+      await this.studentRepo.remove(student);
+      return student;
+    } catch (err) {
+      this.logger.log('Error while reading data error=>' + err);
+      throw new InternalServerErrorException(`Server error, ${err}`);
+    }
   }
 
   async create(createStudentInput: CreateStudentInput): Promise<Student> {
-    const newStudent = this.studentRepo.create(createStudentInput);
-    return this.studentRepo.save(newStudent);
+    try {
+      const newStudent = this.studentRepo.create(createStudentInput);
+      return await this.studentRepo.save(newStudent);
+    } catch (err) {
+      this.logger.log('Error while creating student error=>' + err);
+      throw new InternalServerErrorException(`Server error, ${err}`);
+    }
   }
 
   async update(
     id: number,
     updateStudentInput: CreateStudentInput,
   ): Promise<Student> {
-    const student = await this.studentRepo.findOne(id);
-    student.firstname = updateStudentInput.firstname;
-    student.lastname = updateStudentInput.lastname;
-    student.dob = updateStudentInput.dob;
-    student.age = updateStudentInput.age;
-    student.email = updateStudentInput.email;
-    return await this.studentRepo.save(student);
+    try {
+      const student = await this.findOne(id);
+      const fields = ['firstname', 'lastname', 'dob', 'age', 'email'];
+      fields.forEach((f) => {
+        student[f] = updateStudentInput[f];
+      });
+      return await this.studentRepo.save(student);
+    } catch (err) {
+      this.logger.log('Error while updating student error=>' + err);
+      throw new InternalServerErrorException(`Server error, ${err}`);
+    }
   }
 
-  async createBulk(createStudentInputAry: CreateStudentInput[]) {
+  async createBulk(
+    createStudentInputAry: CreateStudentInput[],
+  ): Promise<CreatedStatus> {
     const query = gql`
       mutation addStudents($students: AddStudentsInput!) {
         addStudents(input: $students) {
@@ -54,19 +95,31 @@ export class AppService {
       }
     `;
 
-    const status = await axios.post('http://localhost:5000/graphql', {
-      query: query,
-      variables: {
-        students: {
-          students: createStudentInputAry,
+    try {
+      const status = await axios.post('http://localhost:5000/graphql', {
+        query: query,
+        variables: {
+          students: {
+            students: createStudentInputAry,
+          },
         },
-      },
-    });
+      });
 
-    if (status.status == 200) {
-      return { status: 'success' };
+      if (status.status == 200) {
+        return Promise.resolve({ status: 'success' });
+      } else {
+        this.logger.log('Error while creating students error=>' + status);
+        throw new InternalServerErrorException(`Server error, ${status}`);
+      }
+    } catch (err) {
+      this.logger.log(
+        'Error communicating with postgraphile server, error=>' + err,
+      );
+      throw new HttpException(
+        `Unexpected error in communication with db server, ${err}`,
+        400,
+      );
     }
-
     // return await this.studentRepo.save(studnetsAry);
   }
 }

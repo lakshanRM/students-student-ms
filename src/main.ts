@@ -13,7 +13,7 @@ async function bootstrap() {
     },
   );
   app.listen().then(() => {
-    logger.log('Students Microservice : Active');
+    logger.log('Students Microservice status => Active');
   });
 }
 bootstrap();

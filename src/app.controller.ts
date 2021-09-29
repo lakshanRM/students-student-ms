@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { AppService } from './app.service';
+import { AppService, CreatedStatus } from './app.service';
 import { CreateStudentInput } from './entities/create-student';
 import { Student } from './entities/student.entity';
 
@@ -19,22 +19,25 @@ export class AppController {
   }
 
   @MessagePattern('delete')
-  async delete(id: number) {
+  async delete(id: number): Promise<Student> {
     return await this.appService.remove(id);
   }
 
   @MessagePattern('create')
-  async cerate(student: CreateStudentInput) {
+  async cerate(student: CreateStudentInput): Promise<Student> {
     return await this.appService.create(student);
   }
 
   @MessagePattern('createBulk')
-  async cerateBulk(students: CreateStudentInput[]) {
+  async cerateBulk(students: CreateStudentInput[]): Promise<CreatedStatus> {
     return await this.appService.createBulk(students);
   }
 
   @MessagePattern('update')
-  async update(data: any) {
+  async update(data: {
+    id: number;
+    student: CreateStudentInput;
+  }): Promise<Student> {
     return await this.appService.update(data.id, data.student);
   }
 }
