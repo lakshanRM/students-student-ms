@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { StudentService } from './student.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { AppService } from './app.service';
+import mockAxios from 'jest-mock-axios';
 import { CreateStudentInput } from './entities/create-student';
 import { Student } from './entities/student.entity';
-import mockAxios from 'jest-mock-axios';
 
-describe('AppService', () => {
-  let service: AppService;
+describe('StudentService', () => {
+  let service: StudentService;
   const studentInput: CreateStudentInput = {
     firstname: 'jane',
     email: 'janed@gmail.com',
@@ -38,7 +38,7 @@ describe('AppService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        AppService,
+        StudentService,
         {
           provide: getRepositoryToken(Student),
           useValue: studentRepo,
@@ -46,7 +46,7 @@ describe('AppService', () => {
       ],
     }).compile();
 
-    service = module.get<AppService>(AppService);
+    service = module.get<StudentService>(StudentService);
   });
 
   it('should be defined', () => {

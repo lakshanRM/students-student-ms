@@ -1,36 +1,36 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { AppService, CreatedStatus } from './app.service';
 import { CreateStudentInput } from './entities/create-student';
 import { Student } from './entities/student.entity';
+import { CreatedStatus, StudentService } from './student.service';
 
 @Controller('students')
-export class AppController {
-  constructor(private readonly appService: AppService) {}
+export class StudentController {
+  constructor(private readonly studentService: StudentService) {}
 
   @MessagePattern('find')
   async find(): Promise<Student[]> {
-    return await this.appService.findAll();
+    return await this.studentService.findAll();
   }
 
   @MessagePattern('findOne')
   async findOne(id: number): Promise<Student> {
-    return await this.appService.findOne(id);
+    return await this.studentService.findOne(id);
   }
 
   @MessagePattern('delete')
   async delete(id: number): Promise<Student> {
-    return await this.appService.remove(id);
+    return await this.studentService.remove(id);
   }
 
   @MessagePattern('create')
   async cerate(student: CreateStudentInput): Promise<Student> {
-    return await this.appService.create(student);
+    return await this.studentService.create(student);
   }
 
   @MessagePattern('createBulk')
   async cerateBulk(students: CreateStudentInput[]): Promise<CreatedStatus> {
-    return await this.appService.createBulk(students);
+    return await this.studentService.createBulk(students);
   }
 
   @MessagePattern('update')
@@ -38,6 +38,6 @@ export class AppController {
     id: number;
     student: CreateStudentInput;
   }): Promise<Student> {
-    return await this.appService.update(data.id, data.student);
+    return await this.studentService.update(data.id, data.student);
   }
 }

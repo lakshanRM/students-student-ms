@@ -6,17 +6,18 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateStudentInput } from './entities/create-student';
-import { Student } from './entities/student.entity';
 import { gql } from 'graphql-request';
 import axios from 'axios';
+import { Student } from './entities/student.entity';
+import { CreateStudentInput } from './entities/create-student';
 
 export interface CreatedStatus {
   status: string;
 }
+
 @Injectable()
-export class AppService {
-  logger = new Logger(AppService.name);
+export class StudentService {
+  logger = new Logger(StudentService.name);
   constructor(
     @InjectRepository(Student) private studentRepo: Repository<Student>,
   ) {}
